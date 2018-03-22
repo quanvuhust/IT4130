@@ -1,0 +1,1 @@
+Không cần nhập passphrase.

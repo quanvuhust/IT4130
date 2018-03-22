@@ -9,5 +9,9 @@ void IP(int64_t plaintext, int32_t &left, int32_t &right);
 int32_t f(int32_t right, int64_t subkey);
 void feistel_scheme(int64_t input, int64_t &output, int64_t subkey_array[]);
 void FP(int64_t ciphertext, int32_t &left, int32_t &right);
-CTR
+void des(int64_t plaintext, int64_t &ciphertext, int64_t subkey_array[]);
+void inv_des(int64_t ciphertext, int64_t &plaintext, int64_t rev_subkey_array[]);
+int PKCS7_padding(int64_t *input, int n);
+int PKCS7_truncate(int64_t *output, int n);
+
 #endif

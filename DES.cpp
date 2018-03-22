@@ -274,20 +274,6 @@ void inv_des(int64_t ciphertext, int64_t &plaintext, int64_t rev_subkey_array[])
     feistel_scheme(ciphertext, plaintext, rev_subkey_array);
 }
 
-
-template <class T>
-int reallocate(T* &p, int new_size)
-{
-    delete[] p;
-    p = nullptr;
-    p  = new T[new_size]();
-    if (p == nullptr) {
-        std::cout << "Not enough memory." << std::endl;
-        return 1;
-    }
-    return 0;
-}
-
 int PKCS7_padding(int64_t *input, int n)
 {
     int num_byte_padding =  8 - (n % 8);
@@ -313,74 +299,4 @@ int PKCS7_truncate(int64_t *output, int n)
         std::cout << "Cipher text has been changed." << std::end;
     }
     return -1;
-}
-
-int open_file() {
-    FILE* in = fopen(infile_name.c_str(), "rb");
-    if (in == nullptr) {
-        std::cout << "Cannot open file " + infile_name << std::endl;
-        return 1;
-    }
-
-    FILE* out = nullptr;
-    out = fopen(oufile_name.c_str(), "rb");
-    if (out != nullptr) {
-        std::string option;
-        std::cout << oufile_name + " is existed." << std::endl;
-        do {
-            std::cout << "Are you want overwrite? (Y/N)" << std::endl;
-        } while(ask_yesno(option));
-        fclose(out);
-        std::regex yes("y(es){0,1}", std::regex_constants::icase);
-        if (std::regex_match(option, yes)) {
-            out = fopen(oufile_name.c_str(), "wb");
-        } else {
-            return 1;
-        }
-    }
-}
-
-
-int DES(int64_t key, bool is_encrypt, int mode, int max_memory = 16 * 1024 * 1024)
-{
-    
-
-    int64_t *input = new int64_t[max_memory + 1]; // +1 to padding
-    int64_t *output = new int64_t[max_memory + 1];
-
-    if (input == nullptr || output == nullptr) {
-        std::cout << "Not enough memory." << std::endl;
-        return 1;
-    }
-    int64_t subkey_array[16];
-    key_schedule(subkey_array, key, is_encrypt, 16);
-    while (!feof(in)) {
-        int n = fread(input, sizeof(char), 8 * max_memory, in);
-        if (n <= 0) {
-            break;
-        }
-        n = PKCS7_padding(input, n);
-        if (n < 8 * (max_memory + 1)) {
-            memcpy(output, input, n);
-            reallocate(input, n);
-            memcpy(input, output, n);
-            reallocate(output, n);
-        }
-
-        switch (mode) {
-        case:
-            ECB(input, output, n);
-            break;
-        case:
-            CTR(input, output, n);
-            break;
-        }
-
-        fwrite(output, sizeof(char), n, out);
-    }
-
-    delete[] input;
-    delete[] output;
-
-    return 0;
 }
