@@ -1,0 +1,8 @@
+/* Lich su cac ham da test */
+function state fixed
+get_bit: PASS NOT_FIXED
+set_bit: FAILED FIXED
+rotate_left_28bit: FAILED FIXED
+PC1: FAILED FIXED
+PC2: FAILED FIXED
+key_schedule: FAILED FIXED

@@ -13,7 +13,7 @@
    0 nếu set == 0
    1 nếu set != 0
 */
-#define set_bit(x, i, set) ((set) != 0 ? (x) |= (1 << (i)) : (x) &= !(1 << (i)))
+#define set_bit(x, i, set) ((set) != 0 ? (x) |= ((uint64_t)1 << (i)) : (x) &= ~((uint64_t)1 << (i)))
 
 const int MAP_IP[] = {
     58, 50, 42, 34, 26, 18, 10, 2, 60, 52,
@@ -25,7 +25,7 @@ const int MAP_IP[] = {
     31, 23, 15, 7
 };
 
-void IP(int64_t plaintext, int32_t &left, int32_t &right)
+void IP(uint64_t plaintext, uint32_t &left, uint32_t &right)
 {
     /* Initial permutation */
     for (int i = 0; i < 32; i++) {
@@ -47,11 +47,11 @@ const int MAP_FP[] = {
     49, 17, 57, 25
 };
 
-void FP(int64_t ciphertext, int32_t &left, int32_t &right)
+void FP(uint64_t ciphertext, uint32_t &left, uint32_t &right)
 {
     /* Final permutation */
     for (int i = 0; i < 64; i++) {
-        if (PC_FP[i] <= 32) {
+        if (MAP_FP[i] <= 32) {
             set_bit(ciphertext, 63 - i, get_bit(left, 32 - MAP_FP[i]));
         }
         else {
@@ -71,14 +71,16 @@ const int MAP_PC1[] = {
     21, 13,  5, 28, 20, 12, 4
 };
 
-void PC1(int64_t key, int32_t &left, int32_t &right)
+void PC1(uint64_t key, uint32_t &left, uint32_t &right)
 {
-    for (int i = 0; i < 32; i++) {
+    for (int i = 0; i < 28; i++)
+    {
         set_bit(left, 31 - i, get_bit(key, 64 - MAP_PC1[i]));
     }
 
-    for (int i = 32; i < 64; i++) {
-        set_bit(right, 63 - i, get_bit(key, 64 - MAP_PC1[i]));
+    for (int i = 28; i < 56; i++)
+    {
+        set_bit(right, 59 - i, get_bit(key, 64 - MAP_PC1[i]));
     }
 }
 
@@ -93,27 +95,28 @@ const int MAP_PC2[] {
     46, 42, 50, 36, 29, 32
 };
 
-void PC2(int64_t subkey_array[], int32_t left, int32_t right, int index)
+void PC2(uint64_t subkey_array[], uint32_t left, uint32_t right, int index)
 {
-    for (int i = 0; i < 48; i++) {
-        if (MAP_PC2[i] <= 32) {
+    for (int i = 0; i < 48; i++)
+    {
+        if (MAP_PC2[i] <= 28) {
             set_bit(subkey_array[index], 63 - i, get_bit(left, 32 - MAP_PC2[i]));
         }
         else {
-            set_bit(subkey_array[index], 63 - i, get_bit(right, 64 - MAP_PC2[i]));
+            set_bit(subkey_array[index], 63 - i, get_bit(right, 60 - MAP_PC2[i]));
         }
     }
 }
 
-void rotate_left_bit32(int32_t &x, int i)
+void rotate_left_28bit(uint32_t &x, int i)
 {
     /* Quay trái i bit */
-    x = (x << i) | (x >> (31 - i));
+    x = (x << i) | (x >> (28 - i));
 }
 
-void key_schedule(int64_t subkey_array[], int64_t key, bool is_encrypt, int n_subkey = 16)
+void key_schedule(uint64_t subkey_array[], uint64_t key, bool is_encrypt, int n_subkey = 16)
 {
-    int32_t left, right;
+    uint32_t left, right;
     PC1(key, left, right);
 
     const int BIT_ROTATIONS[] = {
@@ -130,8 +133,8 @@ void key_schedule(int64_t subkey_array[], int64_t key, bool is_encrypt, int n_su
     }
 
     for (int i : index) {
-        rotate_left_bit32(left, BIT_ROTATIONS[i]);
-        rotate_left_bit32(right, BIT_ROTATIONS[i]);
+        rotate_left_28bit(left, BIT_ROTATIONS[i]);
+        rotate_left_28bit(right, BIT_ROTATIONS[i]);
 
         PC2(subkey_array, left, right, i);
     }
@@ -191,7 +194,7 @@ const int SBox[8][4][16] = {
     }
 };
 
-int32_t f(int32_t right, int64_t subkey)
+uint32_t f(uint32_t right, uint64_t subkey)
 {
     /*  The Feistel (F) function
         right: 32 bit
@@ -210,7 +213,7 @@ int32_t f(int32_t right, int64_t subkey)
         28, 29, 30, 31, 32, 1
     };
 
-    int64_t ex_right = 0;
+    uint64_t ex_right = 0;
 
     for (int i = 0; i < 48; i++) {
         set_bit(ex_right, 63 - i, get_bit(right, 32 - E[i]));
@@ -218,7 +221,7 @@ int32_t f(int32_t right, int64_t subkey)
 
     ex_right ^= subkey;
     int outers_bit = 0, group_bit = 0;
-    int32_t tmp = 0;
+    uint32_t tmp = 0;
 
     /* Chuyển đổi S-Box */
     for (int i = 0; i < 8; i++) {
@@ -242,7 +245,7 @@ int32_t f(int32_t right, int64_t subkey)
         22, 11, 4, 25
     };
 
-    int32_t result = 0;
+    uint32_t result = 0;
     for (int i = 0; i < 32; i++) {
         set_bit(result, 31 - i, get_bit(tmp, 32 - P[i]));
     }
@@ -250,9 +253,9 @@ int32_t f(int32_t right, int64_t subkey)
     return result;
 }
 
-void feistel_scheme(int64_t input, int64_t &output, int64_t subkey_array[])
+void feistel_scheme(uint64_t input, uint64_t &output, uint64_t subkey_array[])
 {
-    int32_t left = 0, right = 0, tmp = 0;
+    uint32_t left = 0, right = 0, tmp = 0;
     IP(input, left, right);
 
     for (int i = 0; i < 16; i++) {
@@ -264,21 +267,21 @@ void feistel_scheme(int64_t input, int64_t &output, int64_t subkey_array[])
     FP(output, right, left);
 }
 
-void des(int64_t plaintext, int64_t &ciphertext, int64_t subkey_array[])
+void des(uint64_t plaintext, uint64_t &ciphertext, uint64_t subkey_array[])
 {
     feistel_scheme(plaintext, ciphertext, subkey_array);
 }
 
-void inv_des(int64_t ciphertext, int64_t &plaintext, int64_t rev_subkey_array[])
+void inv_des(uint64_t ciphertext, uint64_t &plaintext, uint64_t rev_subkey_array[])
 {
     feistel_scheme(ciphertext, plaintext, rev_subkey_array);
 }
 
-int PKCS7_padding(int64_t *input, int n)
+int PKCS7_padding(uint64_t *input, int n)
 {
     int num_byte_padding =  8 - (n % 8);
     int new_size = (n / 8 + 1) * 8;
-    char *p = input + n;
+    char *p = (char*)input + n;
 
     for (int i = 0; i < num_byte_padding; i++) {
         p[i] = (char)num_byte_padding;
@@ -287,7 +290,7 @@ int PKCS7_padding(int64_t *input, int n)
     return new_size;
 }
 
-int PKCS7_truncate(int64_t *output, int n)
+int PKCS7_truncate(uint64_t *output, int n)
 {
     int num_byte_padding = output[n - 1], i = 0;
     assert(num_byte_padding > 0 || num_byte_padding < 9);
@@ -296,7 +299,7 @@ int PKCS7_truncate(int64_t *output, int n)
         return i;
     }
     else {
-        std::cout << "Cipher text has been changed." << std::end;
+        std::cout << "Cipher text has been changed." << std::endl;
     }
     return -1;
 }
