@@ -47,7 +47,7 @@ const int MAP_FP[] = {
     49, 17, 57, 25
 };
 
-void FP(uint64_t ciphertext, uint32_t &left, uint32_t &right)
+void FP(uint64_t &ciphertext, uint32_t left, uint32_t right)
 {
     /* Final permutation */
     for (int i = 0; i < 64; i++) {
@@ -132,11 +132,11 @@ void key_schedule(uint64_t subkey_array[], uint64_t key, bool is_encrypt, int n_
         for (int i = 0; i < n_subkey; i++) index[i] = n_subkey - 1 - i;
     }
 
-    for (int i : index) {
+    for (int i = 0; i < n_subkey; i++) {
         rotate_left_28bit(left, BIT_ROTATIONS[i]);
         rotate_left_28bit(right, BIT_ROTATIONS[i]);
 
-        PC2(subkey_array, left, right, i);
+        PC2(subkey_array, left, right, index[i]);
     }
 }
 

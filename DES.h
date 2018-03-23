@@ -1,17 +1,17 @@
 #ifndef DES_H
 #define DES_H 0
 
-void PC1(int64_t key, int32_t &left, int32_t &right);
-void PC2(int64_t subkey_array[], int32_t left, int32_t right, int index);
-void rotate_left_bit32(int32_t &x, int i);
-void key_schedule(int64_t subkey_array[], int64_t key, bool is_encrypt, int n_subkey = 16);
-void IP(int64_t plaintext, int32_t &left, int32_t &right);
-int32_t f(int32_t right, int64_t subkey);
-void feistel_scheme(int64_t input, int64_t &output, int64_t subkey_array[]);
-void FP(int64_t ciphertext, int32_t &left, int32_t &right);
-void des(int64_t plaintext, int64_t &ciphertext, int64_t subkey_array[]);
-void inv_des(int64_t ciphertext, int64_t &plaintext, int64_t rev_subkey_array[]);
-int PKCS7_padding(int64_t *input, int n);
-int PKCS7_truncate(int64_t *output, int n);
+void PC1(uint64_t key, uint32_t &left, uint32_t &right);
+void PC2(uint64_t subkey_array[], uint32_t left, uint32_t right, int index);
+void rotate_left_bit32(uint32_t &x, int i);
+void key_schedule(uint64_t subkey_array[], uint64_t key, bool is_encrypt, int n_subkey = 16);
+void IP(uint64_t plaintext, uint32_t &left, uint32_t &right);
+uint32_t f(uint32_t right, uint64_t subkey);
+void feistel_scheme(uint64_t input, uint64_t &output, uint64_t subkey_array[]);
+void FP(uint64_t &ciphertext, uint32_t left, uint32_t right);
+void des(uint64_t plaintext, uint64_t &ciphertext, uint64_t subkey_array[]);
+void inv_des(uint64_t ciphertext, uint64_t &plaintext, uint64_t rev_subkey_array[]);
+int PKCS7_padding(uint64_t *input, int n);
+int PKCS7_truncate(uint64_t *output, int n);
 
 #endif
