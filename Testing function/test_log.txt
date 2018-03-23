@@ -11,3 +11,5 @@ f: PASS NOT_FIXED
 feistel_scheme: FAILED FIXED
 des: PASS NOT_FIXED
 inv_des: PASS NOT_FIXED
+PKCS7_padding: FAILED FIXED
+PKCS7_truncate: FAILED FIXED

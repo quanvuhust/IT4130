@@ -114,9 +114,9 @@ void rotate_left_28bit(uint32_t &x, int i)
     x = (x << i) | (x >> (28 - i));
 }
 
-void key_schedule(uint64_t subkey_array[], uint64_t key, bool is_encrypt, int n_subkey = 16)
+void key_schedule(uint64_t subkey_array[], uint64_t key, int is_encrypt, int n_subkey = 16)
 {
-    uint32_t left, right;
+    uint32_t left = 0, right = 0;
     PC1(key, left, right);
 
     const int BIT_ROTATIONS[] = {
@@ -277,29 +277,27 @@ void inv_des(uint64_t ciphertext, uint64_t &plaintext, uint64_t rev_subkey_array
     feistel_scheme(ciphertext, plaintext, rev_subkey_array);
 }
 
-int PKCS7_padding(uint64_t *input, int n)
+uint64_t PKCS7_padding(uint64_t *input, uint64_t n)
 {
-    int num_byte_padding =  8 - (n % 8);
-    int new_size = (n / 8 + 1) * 8;
-    char *p = (char*)input + n;
+    uint32_t num_byte_padding =  8 - (n % 8);
+    uint64_t new_size = (n / 8 + 1) * 8;
+    unsigned char *p = (unsigned char*)input + n;
 
-    for (int i = 0; i < num_byte_padding; i++) {
-        p[i] = (char)num_byte_padding;
+    for (uint32_t i = 0; i < num_byte_padding; i++) {
+        p[i] = (unsigned char)num_byte_padding;
     }
 
     return new_size;
 }
 
-int PKCS7_truncate(uint64_t *output, int n)
+uint64_t PKCS7_truncate(unsigned char *output, uint64_t n)
 {
-    int num_byte_padding = output[n - 1], i = 0;
+    uint32_t num_byte_padding = output[n - 1];
+    uint64_t i = 0;
     assert(num_byte_padding > 0 || num_byte_padding < 9);
-    for (i = n - 1; output[i] == num_byte_padding; i--);
-    if (n - 1 - i == num_byte_padding) {
-        return i;
+    for (i = n - 1; (output[i] == num_byte_padding) && (n - i) <= num_byte_padding; i--);
+    if (n - 1 - i != num_byte_padding) {
+        std::cerr << "Cipher text has been changed." << std::endl;
     }
-    else {
-        std::cout << "Cipher text has been changed." << std::endl;
-    }
-    return -1;
+    return n-num_byte_padding;
 }
