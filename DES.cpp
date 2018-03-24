@@ -5,6 +5,7 @@
 #include <cstdio>
 #include <regex>
 #include <cassert>
+#include <algorithm>
 
 /* Lấy gía trị bit tại vị trí thứ i tính từ vị trí số 0 từ phải sang của số x */
 #define get_bit(x, i) (((x) >> (i)) & 1)
@@ -114,8 +115,28 @@ void rotate_left_28bit(uint32_t &x, int i)
     x = (x << i) | (x >> (28 - i));
 }
 
-void key_schedule(uint64_t subkey_array[], uint64_t key, int is_encrypt, int n_subkey = 16)
+const uint64_t WEAK_KEY_TABLE[16] =
 {
+    0x0101010101010101, 0xFEFEFEFEFEFEFEFE,
+    0x1F1F1F1F0E0E0E0E, 0xE0E0E0E0F1F1F1F1,
+    0x011F011F010E010E, 0x1F011F010E010E01,
+    0x01E001E001F101F1, 0xE001E001F101F101,
+    0x01FE01FE01FE01FE, 0xFE01FE01FE01FE01,
+    0x1FE01FE00EF10EF1, 0xE01FE01FF10EF10E,
+    0x1FFE1FFE0EFE0EFE, 0xFE1FFE1FFE0EFE0E,
+    0xE0FEE0FEF1FEF1FE, 0xFEE0FEE0FEF1FEF1
+};
+
+int check_key_weak(uint64_t key) {
+    return std::find(WEAK_KEY_TABLE, WEAK_KEY_TABLE + 16, key) != (WEAK_KEY_TABLE + 16);
+}
+
+int key_schedule(uint64_t subkey_array[], uint64_t key, int is_encrypt, int n_subkey = 16)
+{
+    if(check_key_weak(key)) {
+        return 0;
+    }
+
     uint32_t left = 0, right = 0;
     PC1(key, left, right);
 
@@ -138,9 +159,8 @@ void key_schedule(uint64_t subkey_array[], uint64_t key, int is_encrypt, int n_s
 
         PC2(subkey_array, left, right, index[i]);
     }
+    return 1;
 }
-
-
 
 const int SBox[8][4][16] = {
     {
@@ -299,5 +319,5 @@ uint64_t PKCS7_truncate(unsigned char *output, uint64_t n)
     if (n - 1 - i != num_byte_padding) {
         std::cerr << "Cipher text has been changed." << std::endl;
     }
-    return n-num_byte_padding;
+    return n - num_byte_padding;
 }

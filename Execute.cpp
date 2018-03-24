@@ -1,4 +1,6 @@
 #include "DES.h"
+#include "Mode.h"
+#include "TimeRun.h"
 #include <mpi.h>
 #define BLOCK_SIZE (16 * 1024 * 1024)
 
@@ -40,32 +42,13 @@ int open_file(FILE* &in, FILE* &out) {
     return 1;
 }
 
-int reallocate(uint64_t* &p, uint64_t new_size)
-{
-    delete[] p;
-    p = nullptr;
-    p  = new uint64_t[new_size]();
-    if (p == nullptr) {
-        std::cout << "Not enough memory." << std::endl;
-        return 1;
-    }
-    return 0;
-}
-
-int read_file(FILE *in, uint64_t* &input, int is_encrypt, uint64_t &n) {
-    n = fread(input, sizeof(unsigned char), 8 * max_memory, in);
+int read_file(FILE *in, uint64_t* &text, int is_encrypt, uint64_t &n) {
+    n = fread(text, sizeof(unsigned char), 8 * max_memory, in);
     if (n <= 0) {
         return 0;
     }
     if(is_encrypt) {
-        n = PKCS7_padding(input, n);
-    }
-    
-    if (n < 8 * (max_memory + 1)) {
-        memcpy(output, input, n);
-        reallocate(input, n);
-        memcpy(input, output, n);
-        reallocate(output, n);
+        n = PKCS7_padding(text, n);
     }
 
     if (feof(in)) {
@@ -90,22 +73,22 @@ int main(int argc, char* argv[]) {
             flag_kill = 0;
             MPI_Bcast(&flag_kill, 1, MPI_INT, 0, MPI_COMM_WORLD);
         } else {
-            key_schedule(subkey_array, key, is_encrypt, 16);
-            MPI_Bcast(subkey_array, 16, MPI_LONG_LONG_INT, 0, MPI_COMM_WORLD);
+            if(key_schedule(subkey_array, key, is_encrypt, 16)) {
+                MPI_Bcast(subkey_array, 16, MPI_LONG_LONG_INT, 0, MPI_COMM_WORLD);
+            } else {
+                flag_kill = 0;
+            }  
         }
-
     }
     /* Tat ca process phai doi process 0 doc file xong moi duoc thuc hien tiep */
     MPI_Barrier(MPI_COMM_WORLD);
-    uint64_t *input = nullptr;
-    uint64_t *output = nullptr;
+    uint64_t *text = nullptr;
 
     /* Kiem tra xem chuong trinh co ket thuc chua */
     if (flag_kill) {
         if (rank == 0) {
-            input = new uint64_t[max_memory + 1]; // +1 to padding
-            output = new uint64_t[max_memory + 1];
-            if (input == nullptr || output == nullptr) {
+            text = new uint64_t[max_memory + 1]; // +1 to padding
+            if (text == nullptr) {
                 cerr << "Not enough memory." << std::endl;
                 flag_kill = 0;
                 MPI_Bcast(&flag_kill, 1, MPI_INT, 0, MPI_COMM_WORLD);
@@ -115,7 +98,7 @@ int main(int argc, char* argv[]) {
         while (flag_kill) {
             /* Chi process 0 duoc doc file */
             if (rank == 0) {
-                if (!read_file(in, input, n)) {
+                if (!read_file(in, text, n)) {
                     flag_kill = 0;
                     MPI_Bcast(&flag_kill, 1, MPI_INT, 0, MPI_COMM_WORLD);
                 }
@@ -130,9 +113,9 @@ int main(int argc, char* argv[]) {
                 /* Processor 0 thuc hien ghi ket qua xuong file */
                 if (rank == 0) {
                     if(!is_encrypt) {
-                        n = PKCS7_truncate(output, n);
+                        n = PKCS7_truncate(text, n);
                     }
-                    fwrite(output, sizeof(unsigned  char), n, out);
+                    fwrite(text, sizeof(unsigned  char), n, out);
                 }
                 MPI_Barrier(MPI_COMM_WORLD);
             }
