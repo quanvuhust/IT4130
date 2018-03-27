@@ -1,0 +1,1 @@
+./Test/Ciphertext/Note.CTR ./Test/Plaintext/Note.txt 18

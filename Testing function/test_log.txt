@@ -13,3 +13,6 @@ des: PASS NOT_FIXED
 inv_des: PASS NOT_FIXED
 PKCS7_padding: FAILED FIXED
 PKCS7_truncate: FAILED FIXED
+
+CryptoProgram.cpp: PASS NOT_FIXED
+CryptoProgram.h: PASS NOT_FIXED
