@@ -1,0 +1,7 @@
+﻿Định dạng:
+ input output n
+VỚi 
+- input: tên file cần mã hóa
+- ouput: tên file sau khi mã hóa
+- n: Số luồng để chạy chương trình mã hóa.
+*Lưu ý: Nếu tên đường dẫn chứa dấu cách thì phải đặt tên đường dẫn trong cặp ngoặc kép. Ví dụ: "./ma hoa/Note.txt"

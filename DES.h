@@ -1,5 +1,15 @@
 #ifndef DES_H
 #define DES_H 0
+#include <iostream>
+
+/* Lấy gía trị bit tại vị trí thứ i tính từ vị trí số 0 từ phải sang của số x */
+#define get_bit(x, i) (((x) >> (i)) & (uint64_t)1)
+
+/* Đặt gía trị bit tại vị trí thứ i tính từ vị trí số 0 từ phải sang của số x bằng
+   0 nếu set == 0
+   1 nếu set != 0
+*/
+#define set_bit(x, i, set) ((set) != 0 ? (x) |= ((uint64_t)1 << (i)) : (x) &= ~((uint64_t)1 << (i)))
 
 void PC1(uint64_t key, uint32_t &left, uint32_t &right);
 void PC2(uint64_t subkey_array[], uint32_t left, uint32_t right, int index);

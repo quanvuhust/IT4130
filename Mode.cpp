@@ -1,16 +1,20 @@
 #include "Mode.h"
 #include "DES.h"
+#include <mpi.h>
+
 /* Can sua */
-void ECB(uint64_t *text, uint64_t n, int is_encrypt, uint64_t subkey_array[])
+void ecb(uint64_t *text, uint64_t n, int is_encrypt, uint64_t subkey_array[])
 {
-    uint32_t rank = 0, nproc = 0;
+    //MPI_Barrier(MPI_COMM_WORLD);
+    int rank = 0, nproc = 0;
     int *displs = nullptr, *rcounts = nullptr;
     uint64_t *block = nullptr;
 
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &nproc);
-    displs = new uint64_t[nproc];
-    rcounts = new uint64_t[nproc];
+
+    displs = new int[nproc];
+    rcounts = new int[nproc];
 
     uint64_t a = n / nproc, b = n % nproc, delta = 1;
     if (b != 0) {
@@ -28,15 +32,19 @@ void ECB(uint64_t *text, uint64_t n, int is_encrypt, uint64_t subkey_array[])
         }
         b--;
     }
+
+    PRINT_TEXT
+
     MPI_Datatype stype;
     MPI_Type_vector(rcounts[rank], 1, 1, MPI_UNSIGNED_LONG_LONG, &stype);
     MPI_Type_commit(&stype);
 
     /*  Chia du lieu cho cac process:
         Chi co con tro text cua process 0 la tro toi vung co du lieu */
+    MPI_Barrier(MPI_COMM_WORLD);
     MPI_Scatterv(text, rcounts, displs, MPI_UNSIGNED_LONG_LONG, block,
                  1, stype, 0, MPI_COMM_WORLD);
-
+    
     /* Phan ma hoa du lieu */
     if (is_encrypt) {
         for (int i = 0; i < rcounts[rank]; i++) {
@@ -52,20 +60,24 @@ void ECB(uint64_t *text, uint64_t n, int is_encrypt, uint64_t subkey_array[])
     /* Gop du lieu tu cac process */
     MPI_Gatherv(block, 1, stype, text, rcounts, displs,
                 MPI_UNSIGNED_LONG_LONG, 0, MPI_COMM_WORLD);
+    
+    PRINT_TEXT
+
     delete[] block;
     delete[] rcounts;
     delete[] displs;
 }
 
-void CTR(uint64_t *text, int n, int is_encrypt, uint64_t subkey_array[]) {
-    uint32_t rank = 0, nproc = 0;
+void ctr(uint64_t *text, int n, int is_encrypt, uint64_t subkey_array[]) {
+    //MPI_Barrier(MPI_COMM_WORLD);
+    int rank = 0, nproc = 0;
     int *displs = nullptr, *rcounts = nullptr;
     uint64_t *block = nullptr;
 
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &nproc);
-    displs = new uint64_t[nproc];
-    rcounts = new uint64_t[nproc];
+    displs = new int[nproc];
+    rcounts = new int[nproc];
 
     uint64_t a = n / nproc, b = n % nproc, delta = 1;
     if (b != 0) {
@@ -86,7 +98,7 @@ void CTR(uint64_t *text, int n, int is_encrypt, uint64_t subkey_array[]) {
     MPI_Datatype stype;
     MPI_Type_vector(rcounts[rank], 1, 1, MPI_UNSIGNED_LONG_LONG, &stype);
     MPI_Type_commit(&stype);
-
+    MPI_Barrier(MPI_COMM_WORLD);
     /*  Chia du lieu cho cac process:
         Chi co con tro text cua process 0 la tro toi vung co du lieu */
     MPI_Scatterv(text, rcounts, displs, MPI_UNSIGNED_LONG_LONG, block,

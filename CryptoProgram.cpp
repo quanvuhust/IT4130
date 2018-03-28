@@ -1,6 +1,9 @@
 #include <iostream>
 #include <fstream>
 #include <regex>
+#include <cstdio>
+#include "CryptoProgram.h"
+#include "Mode.h"
 
 using namespace std;
 
@@ -41,36 +44,39 @@ int CryptoProgram::input() {
         list_file = "ListEncrypt.txt";
         break;
     }
-
+    cout << list_file << endl;
     fstream inp(list_file.c_str(), ios::in);
+    session sess;
     if (inp.is_open()) {
         while (!inp.eof()) {
-            inp >> lst.in_file;
-            inp >> lst.ou_file;
-            inp >> lst.nproc;
+            inp >> sess.in_file;
+            inp >> sess.ou_file;
+            inp >> sess.nproc;
+            lst.emplace_back(sess);
         }
     } else {
         cerr << "Error opening file " + list_file << endl;
         return 1; // Loi xay ra
     }
-    list_file.close();
+    inp.close();
     return 0; // Khong co loi xay ra
 }
 
 
 void CryptoProgram::execute() {
     int n = lst.size();
+    string key("0x133457799BBCDFF1");
     for (int i = 0; i < n; i++) {
         string command("mpirun -np ");
 
         const string host_file = "machinefile";
-        fstream machine_file(hostfile.c_str(), ios::out);
-        machinefile << "master:" << lst[i].nproc / 2 << endl;
-        machinefile << "slave:" << lst[i].nproc - lst[i].nproc / 2;
+        fstream machine_file(host_file.c_str(), ios::out);
+        machine_file << "master:" << lst[i].nproc / 2 << endl;
+        machine_file << "slave:" << lst[i].nproc - lst[i].nproc / 2;
         machine_file.close();
         command.append(to_string(lst[i].nproc));
-        command.append(" -f " + hostfile + " ./CryptoProgram ");
-
+        command.append(" -f " + host_file + " ./Execute ");
+        command.append("-k " + key + " ");
         if (is_encrypt) {
             command.append("-e" + to_string(mode));
             command.append(" " + lst[i].in_file);
@@ -94,7 +100,8 @@ void CryptoProgram::execute() {
         }
 
         /* Doi lenh system() thuc hien xong */
-        system(command.c_str());
+        cout << command << endl;
+        //system(command.c_str());
     }
 }
 

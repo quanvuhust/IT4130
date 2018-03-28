@@ -18,6 +18,6 @@ private:
 public:
     int input();
     void execute();
-}
+};
 
 #endif

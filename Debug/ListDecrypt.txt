@@ -1,0 +1,1 @@
+./Test/Ciphertext/Note.ECB ./Test/Plaintext/Note_copy.txt  8

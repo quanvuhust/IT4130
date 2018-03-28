@@ -6,15 +6,7 @@
 #include <regex>
 #include <cassert>
 #include <algorithm>
-
-/* Lấy gía trị bit tại vị trí thứ i tính từ vị trí số 0 từ phải sang của số x */
-#define get_bit(x, i) (((x) >> (i)) & 1)
-
-/* Đặt gía trị bit tại vị trí thứ i tính từ vị trí số 0 từ phải sang của số x bằng
-   0 nếu set == 0
-   1 nếu set != 0
-*/
-#define set_bit(x, i, set) ((set) != 0 ? (x) |= ((uint64_t)1 << (i)) : (x) &= ~((uint64_t)1 << (i)))
+#include "DES.h"
 
 const int MAP_IP[] = {
     58, 50, 42, 34, 26, 18, 10, 2, 60, 52,
@@ -107,6 +99,7 @@ void PC2(uint64_t subkey_array[], uint32_t left, uint32_t right, int index)
             set_bit(subkey_array[index], 63 - i, get_bit(right, 60 - MAP_PC2[i]));
         }
     }
+
 }
 
 void rotate_left_28bit(uint32_t &x, int i)
@@ -114,6 +107,7 @@ void rotate_left_28bit(uint32_t &x, int i)
     /* Quay trái i bit */
     x = (x << i) | (x >> (28 - i));
 }
+
 
 const uint64_t WEAK_KEY_TABLE[16] =
 {
@@ -131,7 +125,8 @@ int check_key_weak(uint64_t key) {
     return std::find(WEAK_KEY_TABLE, WEAK_KEY_TABLE + 16, key) != (WEAK_KEY_TABLE + 16);
 }
 
-int key_schedule(uint64_t subkey_array[], uint64_t key, int is_encrypt, int n_subkey = 16)
+
+int key_schedule(uint64_t subkey_array[], uint64_t key, int is_encrypt, int n_subkey)
 {
     if(check_key_weak(key)) {
         return 0;
@@ -153,7 +148,7 @@ int key_schedule(uint64_t subkey_array[], uint64_t key, int is_encrypt, int n_su
         for (int i = 0; i < n_subkey; i++) index[i] = n_subkey - 1 - i;
     }
 
-    for (int i = 0; i < n_subkey; i++) {
+    for (int i = 0; i < 16; i++) {
         rotate_left_28bit(left, BIT_ROTATIONS[i]);
         rotate_left_28bit(right, BIT_ROTATIONS[i]);
 
@@ -246,9 +241,9 @@ uint32_t f(uint32_t right, uint64_t subkey)
     /* Chuyển đổi S-Box */
     for (int i = 0; i < 8; i++) {
         outers_bit = (get_bit(ex_right, 63) << 1) + get_bit(ex_right, 58); // Lấy 2 bit ngoài cùng bit 1, 6
-        ex_right << 1;
+        ex_right <<= 1;
         group_bit = ex_right >> 60; // Lấy 4 bit chính
-        ex_right << 5;
+        ex_right <<= 5;
 
         tmp |= SBox[i][outers_bit][group_bit] << (28 - 4 * i);
     }
@@ -281,7 +276,7 @@ void feistel_scheme(uint64_t input, uint64_t &output, uint64_t subkey_array[])
     for (int i = 0; i < 16; i++) {
         tmp = right;
         right = left ^ f(right, subkey_array[i]);
-        left = right;
+        left = tmp;
     }
 
     FP(output, right, left);
@@ -319,5 +314,5 @@ uint64_t PKCS7_truncate(unsigned char *output, uint64_t n)
     if (n - 1 - i != num_byte_padding) {
         std::cerr << "Cipher text has been changed." << std::endl;
     }
-    return n - num_byte_padding;
+    return n-num_byte_padding;
 }
