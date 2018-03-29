@@ -273,13 +273,13 @@ void feistel_scheme(uint64_t input, uint64_t &output, uint64_t subkey_array[])
     uint32_t left = 0, right = 0, tmp = 0;
     IP(input, left, right);
 
-    for (int i = 0; i < 16; i++) {
+    for (int i = 0; i < 15; i++) {
         tmp = right;
         right = left ^ f(right, subkey_array[i]);
         left = tmp;
     }
-
-    FP(output, right, left);
+    left = left ^ f(right, subkey_array[i]);
+    FP(output, left, right);
 }
 
 void des(uint64_t plaintext, uint64_t &ciphertext, uint64_t subkey_array[])

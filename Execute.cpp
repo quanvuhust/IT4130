@@ -203,12 +203,10 @@ int main(int argc, char* argv[]) {
     MPI_Barrier(MPI_COMM_WORLD);
     /* Process 0 dong file */
     if (rank == 0) {
-        FILE *log = nullptr;
-        log = fopen("result.txt", "at");
-        fprintf(log, "%llu %d %lf\n", file_size, nproc, timer.getTime());
-        if (log != nullptr) fclose(log);
+        timer.writeLog(file_size, nproc);
         if (in != nullptr) fclose(in);
         if (out != nullptr) fclose(out);
+        if(text != nullptr) delete[] text;
     }
     MPI_Finalize();
     return 0;
