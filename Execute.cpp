@@ -4,6 +4,7 @@
 #include <mpi.h>
 #include <regex>
 #include <string>
+#include <memory>
 
 #define BLOCK_SIZE (16 * 1024 * 1024)
 
@@ -55,9 +56,9 @@ int open_file(FILE* &in, FILE* &out, const info &inf) {
     return 1;
 }
 
-int read_file(FILE *in, uint64_t* &text, int is_encrypt, uint64_t &n) {
+int read_file(FILE *in, uint64_t* text, int is_encrypt, uint64_t &n) {
     n = fread(text, sizeof(unsigned char), 8 * BLOCK_SIZE, in);
-    std::cout << "n= " << n << std::endl;
+
     if (n <= 0) {
         return 1;
     }
@@ -151,24 +152,25 @@ int main(int argc, char* argv[]) {
     MPI_Bcast(&flag_kill, 1, MPI_INT, 0, MPI_COMM_WORLD);
     /* Tat ca process phai doi process 0 doc file xong moi duoc thuc hien tiep */
 
-    uint64_t *text = nullptr;
+    std::unique_ptr<uint64_t[]> text(nullptr);
 
     /* Kiem tra xem chuong trinh co ket thuc chua */
     if (flag_kill) {
         MPI_Bcast(subkey_array, 16, MPI_UNSIGNED_LONG_LONG, 0, MPI_COMM_WORLD);
         if (rank == 0) {
-            text = new uint64_t[BLOCK_SIZE + 1]; // +1 to padding
-            if (text == nullptr) {
+            text.reset(new uint64_t[BLOCK_SIZE + 1]); // +1 to padding
+            if (!text) {
                 std::cerr << "Not enough memory." << std::endl;
                 flag_kill = 0;
             }
         }
+
         MPI_Bcast(&flag_kill, 1, MPI_INT, 0, MPI_COMM_WORLD);
         int count = 0;
         while (flag_kill) {
             /* Chi process 0 duoc doc file */
             if (rank == 0) {
-                if (read_file(in, text, is_encrypt, n)) {
+                if (read_file(in, text.get(), is_encrypt, n)) {
                     flag_kill = 0;
                 }
                 file_size += n;
@@ -177,14 +179,14 @@ int main(int argc, char* argv[]) {
             MPI_Bcast(&n, 1, MPI_UNSIGNED_LONG_LONG, 0, MPI_COMM_WORLD);
             //MPI_Barrier(MPI_COMM_WORLD);
 
-            if (flag_kill) {
+            if (n >= 0) {
                 /* Tien hanh ma hoa hoac giai ma khoi du lieu */
                 switch (mode) {
                 case ECB:
-                    ecb(text, n / 8, is_encrypt, subkey_array);
+                    ecb(text.get(), n / 8, is_encrypt, subkey_array);
                     break;
                 case CTR:
-                    ctr(text, n / 8, is_encrypt, subkey_array);
+                    ctr(text.get(), n / 8, is_encrypt, subkey_array);
                     break;
                 }
                 /* Doi tat ca cac processor hoan thanh xong nhiem vu */
@@ -192,9 +194,9 @@ int main(int argc, char* argv[]) {
                 /* Processor 0 thuc hien ghi ket qua xuong file */
                 if (rank == 0) {
                     if (!is_encrypt) {
-                        n = PKCS7_truncate((unsigned char*)text, n);
+                        n = PKCS7_truncate((unsigned char*)text.get(), n);
                     }
-                    fwrite(text, sizeof(unsigned  char), n, out);
+                    fwrite(text.get(), sizeof(unsigned  char), n, out);
                 }
                 MPI_Barrier(MPI_COMM_WORLD);
             }
@@ -206,7 +208,6 @@ int main(int argc, char* argv[]) {
         timer.writeLog(file_size, nproc);
         if (in != nullptr) fclose(in);
         if (out != nullptr) fclose(out);
-        if(text != nullptr) delete[] text;
     }
     MPI_Finalize();
     return 0;

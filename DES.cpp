@@ -278,7 +278,7 @@ void feistel_scheme(uint64_t input, uint64_t &output, uint64_t subkey_array[])
         right = left ^ f(right, subkey_array[i]);
         left = tmp;
     }
-    left = left ^ f(right, subkey_array[i]);
+    left = left ^ f(right, subkey_array[15]);
     FP(output, left, right);
 }
 
