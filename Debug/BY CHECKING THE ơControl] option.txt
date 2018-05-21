@@ -1,0 +1,9 @@
+Hello,
+
+Thí í the demonstration macro for Pulover's Macro Creator.
+
+H? we're using commonly used commands, such á Run], oWinActivate], Send] and oClick].
+
+Thí text ?a sent directly to the active window using Send] from the oText] command window.
+
+You can use oControlCli

@@ -48,7 +48,9 @@ int CryptoProgram::input() {
     fstream inp(list_file.c_str(), ios::in);
     session sess;
     if (inp.is_open()) {
-        while (!inp.eof()) {
+	int n = 0;
+	inp >> n; 
+        for(int i = 0; i < n; i++) {
             inp >> sess.in_file;
             inp >> sess.ou_file;
             inp >> sess.nproc;
@@ -75,7 +77,12 @@ void CryptoProgram::execute() {
         machine_file << "slave:" << lst[i].nproc - lst[i].nproc / 2;
         machine_file.close();
         command.append(to_string(lst[i].nproc));
-        command.append(" -f " + host_file + " ./Execute ");
+        if(lst[i].nproc == 1) {
+            command.append(" ./Execute ");
+        } else {
+            command.append(" -f " + host_file + " ./Execute ");
+        }
+        
         command.append("-k " + key + " ");
         if (is_encrypt) {
             command.append("-e" + to_string(mode));
@@ -101,7 +108,8 @@ void CryptoProgram::execute() {
 
         /* Doi lenh system() thuc hien xong */
         cout << command << endl;
-        //system(command.c_str());
+        system(command.c_str());
+        //system("rm -rf ./Test/Ciphertext/*");
     }
 }
 

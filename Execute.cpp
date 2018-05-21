@@ -6,7 +6,7 @@
 #include <string>
 #include <memory>
 
-#define BLOCK_SIZE (16 * 1024 * 1024)
+#define BLOCK_SIZE (64 * 1024 * 1024)
 
 struct info {
     std::string infile_name;

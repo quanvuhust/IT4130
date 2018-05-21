@@ -1,2 +1,7 @@
-./Test/Plaintext/Note.txt ./Test/Ciphertext/Note 8
-./Test/Plaintext/en_sql_server_2016_enterprise_x64_dvd_8701793.iso ./Test/Ciphertext/en_sql_server_2016_enterprise_x64_dvd_8701793.iso 8
+6
+./Test/Plaintext/2000MB.txt ./Test/Ciphertext/2000MB 8
+./Test/Plaintext/2000MB.txt ./Test/Ciphertext/2000MB 6
+./Test/Plaintext/2000MB.txt ./Test/Ciphertext/2000MB 4
+./Test/Plaintext/2000MB.txt ./Test/Ciphertext/2000MB 2
+./Test/Plaintext/2000MB.txt ./Test/Ciphertext/2000MB 1
+./Test/Plaintext/2000MB.txt ./Test/Ciphertext/2000MB 10

@@ -19,6 +19,7 @@ public:
         FILE *log = nullptr;
         log = fopen(log_file_name, "at");
         fprintf(log, "%llu %d %lf\n", file_size, nproc, getTime());
+        printf("%llu %d %lf\n", file_size, nproc, getTime());
         if (log != nullptr) fclose(log);
     }
 };

@@ -1,7 +1,7 @@
 #ifndef MODE_H
 #define MODE_H 1
 #include <iostream>
-
+#define NDEBUG
 enum MODE {ECB = 1, CTR = 2};
 void ecb(uint64_t *text, uint64_t n, int is_encrypt, uint64_t subkey_array[]);
 void ctr(uint64_t *text, int n, int is_encrypt, uint64_t subkey_array[]);
